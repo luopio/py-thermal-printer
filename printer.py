@@ -170,7 +170,7 @@ if __name__ == '__main__':
     p.print_text("\nHello maailma. How's it going?\n")
     # dependency on Python Imaging Library
     import Image, ImageDraw
-    i = Image.open("lammas_grayscale-bw.png")
+    i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
     p.print_bitmap(data, w, h)
