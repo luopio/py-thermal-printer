@@ -38,7 +38,7 @@ class ThermalPrinter(object):
     TIMEOUT = 3
     SERIALPORT = '/dev/ttyO2'
     # pixels with more color value (average for multiple channels) are counted as white
-    black_threshold = 20
+    black_threshold = 10
     # pixels with less alpha than this are counted as white
     alpha_threshold = 127
     # Set "max heating dots", "heating time", "heating interval"
@@ -97,11 +97,13 @@ class ThermalPrinter(object):
 
     def print_bitmap(self, pixels, w, h, output_png=False):
         ''' 
-            Props for Adafruit as this code has been mostly ported from their Arduino
-            library. 
-            - takes a pixel array. RGBA, RGB, or one channel plain list of values (ranging from 0-255).
-            - w = width of image, h = height of image
-            - if "output_png" is set, prints an "print_bitmap_output.png" in the same folder using the same
+            Best to use images that have a pixel width of 384 as this corresponds
+            to the printer row width. 
+            
+            pixels = a pixel array. RGBA, RGB, or one channel plain list of values (ranging from 0-255).
+            w = width of image
+            h = height of image
+            if "output_png" is set, prints an "print_bitmap_output.png" in the same folder using the same
             thresholds as the actual printing commands. Useful for seeing if there are problems with the 
             original image (this requires PIL).
 
@@ -119,38 +121,63 @@ class ThermalPrinter(object):
 
         self.printer.write(chr(10)) # Paper feed
         
+        # convert the pixel array into a black and white plain list of 1's and 0's
+        # width is enforced to 384 and padded with white if needed
+        black_and_white_pixels = [1] * 384 * h
+        if w > 384:
+            print "Bitmap width too large: %s. Needs to be under 384" % w
+            return False
+        elif w < 384:
+            print "Bitmap under 384 (%s), padding the rest with white" % w
+
+        print "Bitmap size", w
+
+        if type(pixels[0]) == int: # single channel
+            for i, p in enumerate(pixels):
+                if p < self.black_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 3: # RGB
+            for i, p in enumerate(pixels):
+                if sum(p[0:2]) / 3.0 < self.black_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 4: # RGBA
+            for i, p in enumerate(pixels):
+                if sum(p[0:2]) / 3.0 < self.black_threshold and p[3] > self.alpha_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        else:
+            print "Unsupported pixels array type. Please send plain list (single channel, RGB or RGBA)"
+            print "Type pixels[0]", type(pixels[0]), "haz", pixels[0]
+            return False
+
+        # print the 384 * h sized bitmap!
         for rowStart in xrange(0, h, 256):
             chunkHeight = 255 if (h - rowStart) > 255 else h - rowStart            
             time.sleep(0.5)
             self.printer.write(chr(18))
             self.printer.write(chr(42))
             self.printer.write(chr(chunkHeight))
-            self.printer.write(chr(w / 8))
+            self.printer.write(chr(384 / 8))
             time.sleep(0.5)
                         
-            for i in xrange(0, (w / 8) * chunkHeight, 1):
+            for i in xrange(0, (384 / 8) * chunkHeight, 1):
                 # read one byte in
                 byt = 0
                 for xx in xrange(8):
-                    pixel_values = pixels[counter]
+                    pixel_value = black_and_white_pixels[counter]
                     counter += 1
                     # check if this is black or white
-                    # for RGBA
-                    if type(pixel_values) == list and len(pixel_values) > 3 and \
-                       pixel_values[3] > self.alpha_threshold and sum(pixel_values[0:2]) / 3.0 < self.black_threshold:
+                    if pixel_value == 0:
                         byt += 1 << (7 - xx)
-                        if output_png: draw.point((counter % w, round(counter / w)), fill=(0, 0, 0))
-                    # for RGB
-                    elif type(pixel_values) == list and len(pixel_values) == 3 and sum(pixel_values[0:2]) / 3.0 < self.black_threshold:
-                        byt += 1 << (7 - xx)
-                        if output_png: draw.point((counter % w, round(counter / w)), fill=(0, 0, 0))
-                    # for one channel plain list
-                    elif type(pixel_values) == int and pixel_values < self.black_threshold:
-                        byt += 1 << (7 - xx)
-                        if output_png: draw.point((counter % w, round(counter / w)), fill=(0, 0, 0))
+                        if output_png: draw.point((counter % 384, round(counter / 384)), fill=(0, 0, 0))
                     # nope, it's white
                     else:
-                        if output_png: draw.point((counter % w, round(counter / w)), fill=(255, 255, 255))    
+                        if output_png: draw.point((counter % 384, round(counter / 384)), fill=(255, 255, 255))
                 
                 self.printer.write(chr(byt))
             time.sleep(0.5) 
@@ -173,4 +200,4 @@ if __name__ == '__main__':
     i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
-    p.print_bitmap(data, w, h)
+    p.print_bitmap(data, w, h, True)
