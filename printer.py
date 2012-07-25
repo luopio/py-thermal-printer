@@ -1,13 +1,13 @@
 #coding=utf-8
 import serial, time
 
-#================================================#
-#================================================#
-# MUX SETTINGS (Ängström 2012.05)
+#===========================================================#
+#===========================================================#
+# MUX SETTINGS (Ängström 2012.05, also work on ubuntu 12.04)
 # echo 1 > /sys/kernel/debug/omap_mux/spi0_sclk
 # echo 1 > /sys/kernel/debug/omap_mux/spi0_d0 
-#================================================#
-#================================================#
+#===========================================================#
+#===========================================================#
 
     
 class ThermalPrinter(object):
@@ -38,9 +38,17 @@ class ThermalPrinter(object):
     TIMEOUT = 3
     SERIALPORT = '/dev/ttyO2'
     # pixels with more color value (average for multiple channels) are counted as white
-    black_threshold = 10
+    # tweak this if your images appear too black or too white
+    black_threshold = 48
     # pixels with less alpha than this are counted as white
     alpha_threshold = 127
+
+    # These values (including printDensity and printBreaktime) are taken from 
+    # lazyatom's Adafruit-Thermal-Library branch and seem to work nicely with bitmap 
+    # images. Changes here can cause symptoms like images printing out as random text. 
+    # Play freely, but remember the working values.
+    # https://github.com/adafruit/Adafruit-Thermal-Printer-Library/blob/0cc508a9566240e5e5bac0fa28714722875cae69/Thermal.cpp
+    
     # Set "max heating dots", "heating time", "heating interval"
     # n1 = 0-255 Max printing dots, Unit (8dots), Default: 7 (64 dots)
     # n2 = 3-255 Heating time, Unit (10us), Default: 80 (800us)
@@ -51,9 +59,9 @@ class ThermalPrinter(object):
     # but the slower printing speed. If heating time is too short,
     # blank page may occur. The more heating interval, the more
     # clear, but the slower printing speed.
-    heatingDots = 80
-    heatTime = 255
-    heatInterval = 250
+    heatingDots = 7
+    heatTime = 120
+    heatInterval = 50
 
     printer = None
     
@@ -68,17 +76,23 @@ class ThermalPrinter(object):
         # Description of print density from page 23 of the manual:
         # DC2 # n Set printing density
         # Decimal: 18 35 n
-        # D4..D0 of n is used to set the printing density. Density is
-        # 50% + 5% * n(D4-D0) printing density.
-        # D7..D5 of n is used to set the printing break time. Break time
-        # is n(D7-D5)*250us.
-        # (Unsure of the default value for either -- not documented)
-        printDensity = 14 # 120% (? can go higher, text is darker but fuzzy)
-        printBreakTime = 4 # 500 uS
+        # D4..D0 of n is used to set the printing density. Density is 50% + 5% * n(D4-D0) printing density.
+        # D7..D5 of n is used to set the printing break time. Break time is n(D7-D5)*250us.
+        printDensity = 15 # 120% (? can go higher, text is darker but fuzzy)
+        printBreakTime = 15 # 500 uS
         self.printer.write(chr(18))
         self.printer.write(chr(35))
-        self.printer.write(chr((printBreakTime << 5) | printDensity))
+        self.printer.write(chr((printDensity << 4) | printBreakTime))
 
+
+    def reset(self):
+        self.printer.write(chr(27))
+        self.printer.write(chr(64))
+
+
+    def linefeed(self):
+        self.printer.write(chr(10))
+        
 
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
@@ -93,7 +107,48 @@ class ThermalPrinter(object):
                 l.insert(i, '\n')
             self.printer.write("".join(l))
             print "".join(l)
-        
+    
+
+    def convert_pixel_array_to_binary(self, pixels, w, h):
+        # convert the pixel array into a black and white plain list of 1's and 0's
+        # width is enforced to 384 and padded with white if needed
+        black_and_white_pixels = [1] * 384 * h
+        if w > 384:
+            print "Bitmap width too large: %s. Needs to be under 384" % w
+            return False
+        elif w < 384:
+            print "Bitmap under 384 (%s), padding the rest with white" % w
+
+        print "Bitmap size", w
+
+        if type(pixels[0]) == int: # single channel
+            print " => single channel"
+            for i, p in enumerate(pixels):
+                if p < self.black_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 3: # RGB
+            print " => RGB channel"
+            for i, p in enumerate(pixels):
+                if sum(p[0:2]) / 3.0 < self.black_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 4: # RGBA
+            print " => RGBA channel"
+            for i, p in enumerate(pixels):
+                if sum(p[0:2]) / 3.0 < self.black_threshold and p[3] > self.alpha_threshold:
+                    black_and_white_pixels[i % w + i / w * 384] = 0
+                else:
+                    black_and_white_pixels[i % w + i / w * 384] = 1
+        else:
+            print "Unsupported pixels array type. Please send plain list (single channel, RGB or RGBA)"
+            print "Type pixels[0]", type(pixels[0]), "haz", pixels[0]
+            return False
+
+        return black_and_white_pixels
+
 
     def print_bitmap(self, pixels, w, h, output_png=False):
         ''' 
@@ -116,88 +171,59 @@ class ThermalPrinter(object):
         '''
         counter = 0
         if output_png:
+            import Image, ImageDraw
             test_img = Image.new('RGB', (384, h))
             draw = ImageDraw.Draw(test_img)
 
-        self.printer.write(chr(10)) # Paper feed
+        self.linefeed()
         
-        # convert the pixel array into a black and white plain list of 1's and 0's
-        # width is enforced to 384 and padded with white if needed
-        black_and_white_pixels = [1] * 384 * h
-        if w > 384:
-            print "Bitmap width too large: %s. Needs to be under 384" % w
-            return False
-        elif w < 384:
-            print "Bitmap under 384 (%s), padding the rest with white" % w
+        black_and_white_pixels = self.convert_pixel_array_to_binary(pixels, w, h)        
+        print_bytes = []
 
-        print "Bitmap size", w
-
-        if type(pixels[0]) == int: # single channel
-            for i, p in enumerate(pixels):
-                if p < self.black_threshold:
-                    black_and_white_pixels[i % w + i / w * 384] = 0
-                else:
-                    black_and_white_pixels[i % w + i / w * 384] = 1
-        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 3: # RGB
-            for i, p in enumerate(pixels):
-                if sum(p[0:2]) / 3.0 < self.black_threshold:
-                    black_and_white_pixels[i % w + i / w * 384] = 0
-                else:
-                    black_and_white_pixels[i % w + i / w * 384] = 1
-        elif type(pixels[0]) in (list, tuple) and len(pixels[0]) == 4: # RGBA
-            for i, p in enumerate(pixels):
-                if sum(p[0:2]) / 3.0 < self.black_threshold and p[3] > self.alpha_threshold:
-                    black_and_white_pixels[i % w + i / w * 384] = 0
-                else:
-                    black_and_white_pixels[i % w + i / w * 384] = 1
-        else:
-            print "Unsupported pixels array type. Please send plain list (single channel, RGB or RGBA)"
-            print "Type pixels[0]", type(pixels[0]), "haz", pixels[0]
-            return False
-
-        # print the 384 * h sized bitmap!
+        # read the bytes into an array
         for rowStart in xrange(0, h, 256):
-            chunkHeight = 255 if (h - rowStart) > 255 else h - rowStart            
-            time.sleep(0.5)
-            self.printer.write(chr(18))
-            self.printer.write(chr(42))
-            self.printer.write(chr(chunkHeight))
-            self.printer.write(chr(384 / 8))
-            time.sleep(0.5)
-                        
-            for i in xrange(0, (384 / 8) * chunkHeight, 1):
+            chunkHeight = 255 if (h - rowStart) > 255 else h - rowStart
+            print_bytes += (18, 42, chunkHeight, 48)
+            
+            for i in xrange(0, 48 * chunkHeight, 1):
                 # read one byte in
                 byt = 0
                 for xx in xrange(8):
                     pixel_value = black_and_white_pixels[counter]
                     counter += 1
-                    # check if this is black or white
+                    # check if this is black
                     if pixel_value == 0:
                         byt += 1 << (7 - xx)
                         if output_png: draw.point((counter % 384, round(counter / 384)), fill=(0, 0, 0))
-                    # nope, it's white
+                    # it's white
                     else:
                         if output_png: draw.point((counter % 384, round(counter / 384)), fill=(255, 255, 255))
                 
-                self.printer.write(chr(byt))
-            time.sleep(0.5) 
+                print_bytes.append(byt)
         
-        self.printer.write(chr(10)) # Paper feed
-        self.printer.write(chr(10)) # Paper feed
-
+        # output the array all at once to the printer
+        # might be better to send while printing when dealing with 
+        # very large arrays...
+        for b in print_bytes:
+            self.printer.write(chr(b))   
+        
         if output_png:
             test_print = open('print-output.png', 'wb')
             test_img.save(test_print, 'PNG')
-            test_print.close()
+            print "output saved to %s" % test_print.name
+            test_print.close()           
+
 
 
 if __name__ == '__main__':
     print "Testing printer"
     p = ThermalPrinter()
     p.print_text("\nHello maailma. How's it going?\n")
-    # dependency on Python Imaging Library
+    # runtime dependency on Python Imaging Library
     import Image, ImageDraw
     i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
     p.print_bitmap(data, w, h, True)
+    p.linefeed()
+    
