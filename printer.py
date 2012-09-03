@@ -119,6 +119,15 @@ class ThermalPrinter(object):
         self.printer.write(chr(69))
         self.printer.write(chr(1))
 
+    def fontBOn(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(33))
+        self.printer.write(chr(1))
+
+    def fontBOff(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(33))
+        self.printer.write(chr(0))
 
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
