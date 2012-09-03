@@ -105,17 +105,17 @@ class ThermalPrinter(object):
             pos = 1
         elif align == "R":
             pos = 2
-        self.printer.write(_ESC)
+        self.printer.write(self._ESC)
         self.printer.write(chr(97))
         self.printer.write(pos)
 
     def boldOff(self):
-        self.printer.write(_ESC)
+        self.printer.write(self._ESC)
         self.printer.write(chr(69))
         self.printer.write(1)
 
     def boldOn(self):
-        self.printer.write(_ESC)
+        self.printer.write(self._ESC)
         self.printer.write(chr(69))
         self.printer.write(0)
 
