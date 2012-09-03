@@ -36,7 +36,7 @@ class ThermalPrinter(object):
 
     BAUDRATE = 19200
     TIMEOUT = 3
-    SERIALPORT = '/dev/ttyO2'
+    SERIALPORT = '/dev/ttyAMA0'
     # pixels with more color value (average for multiple channels) are counted as white
     # tweak this if your images appear too black or too white
     black_threshold = 48
@@ -60,13 +60,17 @@ class ThermalPrinter(object):
     # blank page may occur. The more heating interval, the more
     # clear, but the slower printing speed.
     heatingDots = 7
-    heatTime = 120
-    heatInterval = 50
+    heatTime = 80 #120
+    heatInterval = 2 #50
 
     printer = None
+
+    _ESC = chr(27)
     
     def __init__(self):
         self.printer = serial.Serial(self.SERIALPORT, self.BAUDRATE, timeout=self.TIMEOUT)
+        self.printer.write(chr(27)) # ESC - command
+        self.printer.write(chr(64)) # @   - initialize
         self.printer.write(chr(27)) # ESC - command
         self.printer.write(chr(55)) # 7   - print settings
         self.printer.write(chr(self.heatingDots))  # Heating dots (20=balance of darkness vs no jams) default = 20
@@ -92,7 +96,29 @@ class ThermalPrinter(object):
 
     def linefeed(self):
         self.printer.write(chr(10))
-        
+
+    def justify(self, align="L"):
+        pos = 0
+        if align == "L":
+            pos = 0
+        elif align == "C":
+            pos = 1
+        elif align == "R":
+            pos = 2
+        self.printer.write(_ESC)
+        self.printer.write(chr(97))
+        self.printer.write(pos)
+
+    def boldOff(self):
+        self.printer.write(_ESC)
+        self.printer.write(chr(69))
+        self.printer.write(1)
+
+    def boldOn(self):
+        self.printer.write(_ESC)
+        self.printer.write(chr(69))
+        self.printer.write(0)
+
 
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
@@ -225,5 +251,7 @@ if __name__ == '__main__':
     data = list(i.getdata())
     w, h = i.size
     p.print_bitmap(data, w, h, True)
+    p.linefeed()
+    p.linefeed()
     p.linefeed()
     
