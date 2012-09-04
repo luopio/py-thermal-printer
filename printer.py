@@ -36,7 +36,7 @@ class ThermalPrinter(object):
 
     BAUDRATE = 19200
     TIMEOUT = 3
-    SERIALPORT = '/dev/tty02'
+    SERIALPORT = '/dev/ttyO2'
     # pixels with more color value (average for multiple channels) are counted as white
     # tweak this if your images appear too black or too white
     black_threshold = 48
