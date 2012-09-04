@@ -43,6 +43,10 @@ class ThermalPrinter(object):
     # pixels with less alpha than this are counted as white
     alpha_threshold = 127
 
+    printer = None
+
+    _ESC = chr(27)
+
     # These values (including printDensity and printBreaktime) are taken from 
     # lazyatom's Adafruit-Thermal-Library branch and seem to work nicely with bitmap 
     # images. Changes here can cause symptoms like images printing out as random text. 
@@ -59,23 +63,16 @@ class ThermalPrinter(object):
     # but the slower printing speed. If heating time is too short,
     # blank page may occur. The more heating interval, the more
     # clear, but the slower printing speed.
-    heatingDots = 7
-    heatTime = 80 #120
-    heatInterval = 2 #50
-
-    printer = None
-
-    _ESC = chr(27)
     
-    def __init__(self):
+    def __init__(self, heatTime=120, heatInterval=50, heatingDots=7):
         self.printer = serial.Serial(self.SERIALPORT, self.BAUDRATE, timeout=self.TIMEOUT)
-        self.printer.write(chr(27)) # ESC - command
+        self.printer.write(self._ESC) # ESC - command
         self.printer.write(chr(64)) # @   - initialize
-        self.printer.write(chr(27)) # ESC - command
+        self.printer.write(self._ESC) # ESC - command
         self.printer.write(chr(55)) # 7   - print settings
-        self.printer.write(chr(self.heatingDots))  # Heating dots (20=balance of darkness vs no jams) default = 20
-        self.printer.write(chr(self.heatTime)) # heatTime Library default = 255 (max)
-        self.printer.write(chr(self.heatInterval)) # Heat interval (500 uS = slower, but darker) default = 250
+        self.printer.write(chr(heatingDots))  # Heating dots (20=balance of darkness vs no jams) default = 20
+        self.printer.write(chr(heatTime)) # heatTime Library default = 255 (max)
+        self.printer.write(chr(heatInterval)) # Heat interval (500 uS = slower, but darker) default = 250
 
         # Description of print density from page 23 of the manual:
         # DC2 # n Set printing density
@@ -90,7 +87,7 @@ class ThermalPrinter(object):
 
 
     def reset(self):
-        self.printer.write(chr(27))
+        self.printer.write(self._ESC)
         self.printer.write(chr(64))
 
 
@@ -262,7 +259,13 @@ if __name__ == '__main__':
     p.fontBOn()
     p.print_text("line is fontB\n")
     p.fontBOff()
-    
+    p.justify("R")
+    p.print_text("right justified")
+    p.justify("C")
+    p.print_text("centered")
+    p.justify() # justify("L") works too
+    p.print_text("left justified")
+
     # runtime dependency on Python Imaging Library
     import Image, ImageDraw
     i = Image.open("example-lammas.png")
