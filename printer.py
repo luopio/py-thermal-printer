@@ -254,6 +254,15 @@ if __name__ == '__main__':
     print "Testing printer"
     p = ThermalPrinter()
     p.print_text("\nHello maailma. How's it going?\n")
+    p.print_text("Part of this ")
+    p.boldOn()
+    p.print_text("line is bold\n")
+    p.boldOff()
+    p.print_text("Part of this ")
+    p.fontBOn()
+    p.print_text("line is fontB\n")
+    p.fontBOff()
+    
     # runtime dependency on Python Imaging Library
     import Image, ImageDraw
     i = Image.open("example-lammas.png")
