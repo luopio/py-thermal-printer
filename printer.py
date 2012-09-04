@@ -260,11 +260,11 @@ if __name__ == '__main__':
     p.print_text("line is fontB\n")
     p.fontBOff()
     p.justify("R")
-    p.print_text("right justified")
+    p.print_text("right justified\n")
     p.justify("C")
-    p.print_text("centered")
+    p.print_text("centered\n")
     p.justify() # justify("L") works too
-    p.print_text("left justified")
+    p.print_text("left justified\n")
 
     # runtime dependency on Python Imaging Library
     import Image, ImageDraw
