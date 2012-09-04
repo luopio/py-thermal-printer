@@ -106,25 +106,25 @@ class ThermalPrinter(object):
         self.printer.write(chr(97))
         self.printer.write(chr(pos))
 
-    def boldOff(self):
+    def bold_off(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(69))
         self.printer.write(chr(0))
 
-    def boldOn(self):
+    def bold_on(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(69))
         self.printer.write(chr(1))
 
-    def fontBOn(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(33))
-        self.printer.write(chr(1))
-
-    def fontBOff(self):
+    def font_b_off(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(33))
         self.printer.write(chr(0))
+
+    def font_b_on(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(33))
+        self.printer.write(chr(1))
 
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
@@ -262,13 +262,13 @@ if __name__ == '__main__':
     p = ThermalPrinter(serialport=serialport)
     p.print_text("\nHello maailma. How's it going?\n")
     p.print_text("Part of this ")
-    p.boldOn()
+    p.bold_on()
     p.print_text("line is bold\n")
-    p.boldOff()
+    p.bold_off()
     p.print_text("Part of this ")
-    p.fontBOn()
+    p.font_b_on()
     p.print_text("line is fontB\n")
-    p.fontBOff()
+    p.font_b_off()
     p.justify("R")
     p.print_text("right justified\n")
     p.justify("C")
