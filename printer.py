@@ -43,6 +43,10 @@ class ThermalPrinter(object):
     # pixels with less alpha than this are counted as white
     alpha_threshold = 127
 
+    printer = None
+
+    _ESC = chr(27)
+
     # These values (including printDensity and printBreaktime) are taken from 
     # lazyatom's Adafruit-Thermal-Library branch and seem to work nicely with bitmap 
     # images. Changes here can cause symptoms like images printing out as random text. 
@@ -59,19 +63,16 @@ class ThermalPrinter(object):
     # but the slower printing speed. If heating time is too short,
     # blank page may occur. The more heating interval, the more
     # clear, but the slower printing speed.
-    heatingDots = 7
-    heatTime = 120
-    heatInterval = 50
-
-    printer = None
     
-    def __init__(self):
-        self.printer = serial.Serial(self.SERIALPORT, self.BAUDRATE, timeout=self.TIMEOUT)
-        self.printer.write(chr(27)) # ESC - command
+    def __init__(self, heatTime=120, heatInterval=50, heatingDots=7, serialport=SERIALPORT):
+        self.printer = serial.Serial(serialport, self.BAUDRATE, timeout=self.TIMEOUT)
+        self.printer.write(self._ESC) # ESC - command
+        self.printer.write(chr(64)) # @   - initialize
+        self.printer.write(self._ESC) # ESC - command
         self.printer.write(chr(55)) # 7   - print settings
-        self.printer.write(chr(self.heatingDots))  # Heating dots (20=balance of darkness vs no jams) default = 20
-        self.printer.write(chr(self.heatTime)) # heatTime Library default = 255 (max)
-        self.printer.write(chr(self.heatInterval)) # Heat interval (500 uS = slower, but darker) default = 250
+        self.printer.write(chr(heatingDots))  # Heating dots (20=balance of darkness vs no jams) default = 20
+        self.printer.write(chr(heatTime)) # heatTime Library default = 255 (max)
+        self.printer.write(chr(heatInterval)) # Heat interval (500 uS = slower, but darker) default = 250
 
         # Description of print density from page 23 of the manual:
         # DC2 # n Set printing density
@@ -86,13 +87,44 @@ class ThermalPrinter(object):
 
 
     def reset(self):
-        self.printer.write(chr(27))
+        self.printer.write(self._ESC)
         self.printer.write(chr(64))
 
 
     def linefeed(self):
         self.printer.write(chr(10))
-        
+
+    def justify(self, align="L"):
+        pos = 0
+        if align == "L":
+            pos = 0
+        elif align == "C":
+            pos = 1
+        elif align == "R":
+            pos = 2
+        self.printer.write(self._ESC)
+        self.printer.write(chr(97))
+        self.printer.write(chr(pos))
+
+    def bold_off(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(69))
+        self.printer.write(chr(0))
+
+    def bold_on(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(69))
+        self.printer.write(chr(1))
+
+    def font_b_off(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(33))
+        self.printer.write(chr(0))
+
+    def font_b_on(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(33))
+        self.printer.write(chr(1))
 
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
@@ -216,14 +248,41 @@ class ThermalPrinter(object):
 
 
 if __name__ == '__main__':
-    print "Testing printer"
-    p = ThermalPrinter()
+    import sys, os
+
+    if len(sys.argv) == 2:
+        serialport = sys.argv[1]
+    else:
+        serialport = ThermalPrinter.SERIALPORT
+
+    if not os.path.exists(serialport):
+        sys.exit("ERROR: Serial port not found at: %s" % serialport)
+
+    print "Testing printer on port %s" % serialport
+    p = ThermalPrinter(serialport=serialport)
     p.print_text("\nHello maailma. How's it going?\n")
+    p.print_text("Part of this ")
+    p.bold_on()
+    p.print_text("line is bold\n")
+    p.bold_off()
+    p.print_text("Part of this ")
+    p.font_b_on()
+    p.print_text("line is fontB\n")
+    p.font_b_off()
+    p.justify("R")
+    p.print_text("right justified\n")
+    p.justify("C")
+    p.print_text("centered\n")
+    p.justify() # justify("L") works too
+    p.print_text("left justified\n")
+
     # runtime dependency on Python Imaging Library
     import Image, ImageDraw
     i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
     p.print_bitmap(data, w, h, True)
+    p.linefeed()
+    p.linefeed()
     p.linefeed()
     
