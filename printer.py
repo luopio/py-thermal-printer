@@ -126,6 +126,26 @@ class ThermalPrinter(object):
         self.printer.write(chr(33))
         self.printer.write(chr(1))
 
+    def underline_off(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(45))
+        self.printer.write(chr(0))
+
+    def underline_on(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(45))
+        self.printer.write(chr(1))
+
+    def inverse_off(self):
+        self.printer.write(chr(29))
+        self.printer.write(chr(66))
+        self.printer.write(chr(0))
+
+    def inverse_on(self):
+        self.printer.write(chr(29))
+        self.printer.write(chr(66))
+        self.printer.write(chr(1))
+
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
             inserts newlines after the given amount. Use normal '\n' line breaks for 
@@ -139,7 +159,45 @@ class ThermalPrinter(object):
                 l.insert(i, '\n')
             self.printer.write("".join(l))
             print "".join(l)
-    
+
+    def print_markup(self, markup):
+        """
+        Print text with markup for styling.
+
+        Keyword arguments:
+        markup -- text with a left column of markup as follows:
+        first character denotes style (n=normal, b=bold, u=underline, i=inverse, f=font B)
+        second character denotes justification (l=left, c=centre, r=right)
+        third character must be a space, followed by the text of the line
+        """
+        lines = markup.splitlines(True)
+        for l in lines:
+            style = l[0]
+            justification = l[1].upper()
+            text = l[3:]
+
+            if style == 'b':
+                self.bold_on()
+            elif style == 'u':
+               self.underline_on()
+            elif style == 'i':
+               self.inverse_on()
+            elif style == 'f':
+                self.font_b_on()
+
+            self.justify(justification)
+            self.print_text(text)
+            if justification != 'L':
+                self.justify()
+
+            if style == 'b':
+                self.bold_off()
+            elif style == 'u':
+               self.underline_off()
+            elif style == 'i':
+               self.inverse_off()
+            elif style == 'f':
+                self.font_b_off()
 
     def convert_pixel_array_to_binary(self, pixels, w, h):
         # convert the pixel array into a black and white plain list of 1's and 0's
@@ -275,6 +333,14 @@ if __name__ == '__main__':
     p.print_text("centered\n")
     p.justify() # justify("L") works too
     p.print_text("left justified\n")
+
+    markup = """bl bold left
+ur underline right
+fc font b centred (next line blank)
+nl
+il inverse left
+"""
+    p.print_markup(markup)
 
     # runtime dependency on Python Imaging Library
     import Image, ImageDraw

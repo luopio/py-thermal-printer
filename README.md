@@ -8,8 +8,7 @@ Mostly ported from Ladyada's Arduino library
 BeagleBone.
 
 Currently handles printing image data and text, but the rest of the
-built-in functionality like underlining and barcodes are trivial
-to port to Python when needed.
+built-in functionality like barcodes are trivial to port to Python when needed.
 
 If on BeagleBone or similar device, remember to set the mux settings
 or change the UART you are using. To enable the defaults for example:
@@ -18,7 +17,11 @@ or change the UART you are using. To enable the defaults for example:
     echo 1 > /sys/kernel/debug/omap_mux/spi0_sclk
     echo 1 > /sys/kernel/debug/omap_mux/spi0_d0 
 
-UART can be changed by tweaking the serial port value in printer.py.
+If on a Raspberry Pi and using the GPIO UART pins, remember to use a level shifter
+between the printer (5V) and the RPi (3V3).
+
+UART can be changed by passing the device path to the constructor:
+`p = printer.ThermalPrinter(serialport="/dev/ttyUSB0")`
 
 Thanks to Matt Richardson for the initial pointers on controlling the
 device via Python.
