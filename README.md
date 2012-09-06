@@ -26,7 +26,9 @@ UART can be changed by passing the device path to the constructor:
 Thanks to Matt Richardson for the initial pointers on controlling the
 device via Python.
 
-Author: Lauri Kainulainen / White Sheep Isobar (whitesheep.fi)
-
+Author: 
+Lauri Kainulainen / White Sheep Isobar (whitesheep.fi)
+Contributors:
+Jonathan Harlap
 
 (Licensed under the MIT license)
