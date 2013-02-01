@@ -5,7 +5,7 @@ Thermal printing library that controls the "micro panel thermal printer" sold in
 shops like Adafruit and Sparkfun (e.g. http://www.adafruit.com/products/597). 
 Mostly ported from Ladyada's Arduino library 
 (https://github.com/adafruit/Adafruit-Thermal-Printer-Library) to run on
-BeagleBone.
+BeagleBone and Raspberry Pi.
 
 Currently handles printing image data and text, but the rest of the
 built-in functionality like barcodes are trivial to port to Python when needed.
@@ -19,6 +19,8 @@ or change the UART you are using. To enable the defaults for example:
 
 If on a Raspberry Pi and using the GPIO UART pins, remember to use a level shifter
 between the printer (5V) and the RPi (3V3).
+
+For more detailed step-by-step instructions see [this tutorial](http://geekgurldiaries.blogspot.fi/2012/12/little-box-of-geek-project.html).
 
 UART can be changed by passing the device path to the constructor:
 `p = printer.ThermalPrinter(serialport="/dev/ttyUSB0")`

@@ -1,12 +1,21 @@
+#!/usr/bin/env python 
 #coding=utf-8
+
 import serial, time
 
 #===========================================================#
-#===========================================================#
-# MUX SETTINGS (Ängström 2012.05, also work on ubuntu 12.04)
+# RASPBERRY PI (tested with Raspbian Jan 2012):
+# - Ensure that ttyAMA0 is not used for serial console access:
+# edit /boot/cmdline.txt (remove all name-value pairs containing 
+# ttyAMA0) and comment out last line in /etc/inittab.
+# - Fix user permissions with "sudo usermod -a -G dialout pi"
+# - Reboot
+# - Ensure that the SERIALPORT setting is correct below
+#
+# BEAGLE BONE: 
+# Mux settings (Ängström 2012.05, also work on ubuntu 12.04):
 # echo 1 > /sys/kernel/debug/omap_mux/spi0_sclk
 # echo 1 > /sys/kernel/debug/omap_mux/spi0_d0 
-#===========================================================#
 #===========================================================#
 
     
@@ -17,7 +26,7 @@ class ThermalPrinter(object):
         shops like Adafruit and Sparkfun (e.g. http://www.adafruit.com/products/597). 
         Mostly ported from Ladyada's Arduino library 
         (https://github.com/adafruit/Adafruit-Thermal-Printer-Library) to run on
-        BeagleBone.
+        BeagleBone and Raspberry Pi.
 
         Currently handles printing image data and text, but the rest of the
         built-in functionality like underlining and barcodes are trivial
@@ -34,9 +43,14 @@ class ThermalPrinter(object):
 
     '''
 
+    # default serial port for the Beagle Bone
+    SERIALPORT = '/dev/ttyO2'
+    # this might work better on a Raspberry Pi
+    #SERIALPORT = '/dev/ttyAMA0'
+
     BAUDRATE = 19200
     TIMEOUT = 3
-    SERIALPORT = '/dev/ttyO2'
+
     # pixels with more color value (average for multiple channels) are counted as white
     # tweak this if your images appear too black or too white
     black_threshold = 48
