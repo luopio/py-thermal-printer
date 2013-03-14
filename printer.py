@@ -160,6 +160,16 @@ class ThermalPrinter(object):
         self.printer.write(chr(66))
         self.printer.write(chr(1))
 
+    def upsidedown_off(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(123))
+        self.printer.write(chr(0))
+
+    def upsidedown_on(self):
+        self.printer.write(self._ESC)
+        self.printer.write(chr(123))
+        self.printer.write(chr(1))
+
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
             inserts newlines after the given amount. Use normal '\n' line breaks for 
@@ -347,6 +357,9 @@ if __name__ == '__main__':
     p.print_text("centered\n")
     p.justify() # justify("L") works too
     p.print_text("left justified\n")
+    p.upsidedown_on()
+    p.print_text("upside down\n")
+    p.upsidedown_off()
 
     markup = """bl bold left
 ur underline right
