@@ -20,7 +20,7 @@ import serial, time
 
     
 class ThermalPrinter(object):
-    ''' 
+    """ 
         
         Thermal printing library that controls the "micro panel thermal printer" sold in
         shops like Adafruit and Sparkfun (e.g. http://www.adafruit.com/products/597). 
@@ -39,9 +39,9 @@ class ThermalPrinter(object):
         Thanks to Matt Richardson for the initial pointers on controlling the
         device via Python.
 
-        @author: Lauri Kainulainen / White Sheep Isobar (whitesheep.fi)
+        @author: Lauri Kainulainen 
 
-    '''
+    """
 
     # default serial port for the Beagle Bone
     #SERIALPORT = '/dev/ttyO2'
@@ -99,11 +99,9 @@ class ThermalPrinter(object):
         self.printer.write(chr(35))
         self.printer.write(chr((printDensity << 4) | printBreakTime))
 
-
     def reset(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(64))
-
 
     def linefeed(self):
         self.printer.write(chr(10))
@@ -170,12 +168,10 @@ class ThermalPrinter(object):
         self.printer.write(chr(123))
         self.printer.write(chr(1))
 
-        '''Barcode Settings'''
-
-
-        ''' Use http://www.adafruit.com/datasheets/A2-user%20manual.pdf for
-        barcode info '''
     def barcode(self, msg):
+        """ Barcode Settings.
+            Use http://www.adafruit.com/datasheets/A2-user%20manual.pdf for
+            barcode info. """
         self.printer.write(chr(29))
         self.printer.write(chr(107))
         self.printer.write(chr(65))
@@ -192,12 +188,10 @@ class ThermalPrinter(object):
         self.printer.write(chr(104))
         self.printer.write(chr(50))
         
-        '''End Barcode Settings'''
-        
     def print_text(self, msg, chars_per_line=None):
-        ''' Print some text defined by msg. If chars_per_line is defined, 
+        """ Print some text defined by msg. If chars_per_line is defined, 
             inserts newlines after the given amount. Use normal '\n' line breaks for 
-            empty lines. '''
+            empty lines. """ 
         if chars_per_line == None:
             self.printer.write(msg)
         else:
@@ -209,14 +203,13 @@ class ThermalPrinter(object):
             print "".join(l)
 
     def print_markup(self, markup):
-        """
-        Print text with markup for styling.
+        """ Print text with markup for styling.
 
         Keyword arguments:
         markup -- text with a left column of markup as follows:
         first character denotes style (n=normal, b=bold, u=underline, i=inverse, f=font B)
         second character denotes justification (l=left, c=centre, r=right)
-        third character must be a space, followed by the text of the line
+        third character must be a space, followed by the text of the line.
         """
         lines = markup.splitlines(True)
         for l in lines:
@@ -248,8 +241,8 @@ class ThermalPrinter(object):
                 self.font_b_off()
 
     def convert_pixel_array_to_binary(self, pixels, w, h):
-        # convert the pixel array into a black and white plain list of 1's and 0's
-        # width is enforced to 384 and padded with white if needed
+        """ Convert the pixel array into a black and white plain list of 1's and 0's
+            width is enforced to 384 and padded with white if needed. """
         black_and_white_pixels = [1] * 384 * h
         if w > 384:
             print "Bitmap width too large: %s. Needs to be under 384" % w
@@ -289,8 +282,7 @@ class ThermalPrinter(object):
 
 
     def print_bitmap(self, pixels, w, h, output_png=False):
-        ''' 
-            Best to use images that have a pixel width of 384 as this corresponds
+        """ Best to use images that have a pixel width of 384 as this corresponds
             to the printer row width. 
             
             pixels = a pixel array. RGBA, RGB, or one channel plain list of values (ranging from 0-255).
@@ -306,7 +298,7 @@ class ThermalPrinter(object):
                 data = list(i.getdata())
                 w, h = i.size
                 p.print_bitmap(data, w, h)
-        '''
+        """
         counter = 0
         if output_png:
             import Image, ImageDraw
