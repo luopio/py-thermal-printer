@@ -170,6 +170,15 @@ class ThermalPrinter(object):
         self.printer.write(chr(123))
         self.printer.write(chr(1))
 
+        ''' Use http://www.adafruit.com/datasheets/A2-user%20manual.pdf for
+        barcode info '''
+    def barcode(self, msg)
+        self.printer.write(chr(29))
+        self.printer.write(chr(107))
+        self.printer.write(chr(65))
+        self.printer.write(chr(12))
+        self.printer.write(msg)
+        
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
             inserts newlines after the given amount. Use normal '\n' line breaks for 
@@ -375,6 +384,7 @@ il inverse left
     data = list(i.getdata())
     w, h = i.size
     p.print_bitmap(data, w, h, True)
+    p.barcode("014633098808")
     p.linefeed()
     p.linefeed()
     p.linefeed()
