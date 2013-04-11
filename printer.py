@@ -192,6 +192,8 @@ class ThermalPrinter(object):
         self.printer.write(chr(104))
         self.printer.write(chr(50))
         
+        '''End Barcode Settings'''
+        
     def print_text(self, msg, chars_per_line=None):
         ''' Print some text defined by msg. If chars_per_line is defined, 
             inserts newlines after the given amount. Use normal '\n' line breaks for 
