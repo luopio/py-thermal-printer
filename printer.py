@@ -187,7 +187,7 @@ class ThermalPrinter(object):
         self.printer.write(chr(72))
         self.printer.write(chr(2))
         
-    def barcode_chr(self):
+    def barcode_height(self):
         self.printer.write(chr(29))
         self.printer.write(chr(104))
         self.printer.write(chr(50))
@@ -399,6 +399,7 @@ il inverse left
     p.print_bitmap(data, w, h, True)
     p.linefeed()
     p.justify("C")
+    p.barcode_chr()
     p.barcode("014633098808")
     p.linefeed()
     p.linefeed()
