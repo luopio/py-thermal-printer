@@ -172,7 +172,7 @@ class ThermalPrinter(object):
 
         ''' Use http://www.adafruit.com/datasheets/A2-user%20manual.pdf for
         barcode info '''
-    def barcode(self, msg)
+    def barcode(self, msg):
         self.printer.write(chr(29))
         self.printer.write(chr(107))
         self.printer.write(chr(65))
