@@ -7,9 +7,6 @@ Mostly ported from Ladyada's Arduino library
 (https://github.com/adafruit/Adafruit-Thermal-Printer-Library) to run on
 BeagleBone and Raspberry Pi.
 
-Currently handles printing image data and text, but the rest of the
-built-in functionality like barcodes are trivial to port to Python when needed.
-
 If on BeagleBone or similar device, remember to set the mux settings
 or change the UART you are using. To enable the defaults for example:
 
