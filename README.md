@@ -26,8 +26,12 @@ Thanks to Matt Richardson for the initial pointers on controlling the
 device via Python.
 
 Author: 
-Lauri Kainulainen / White Sheep Isobar (whitesheep.fi)
+Lauri Kainulainen
+
 Contributors:
 Jonathan Harlap
+Owen Mundy
+bodiedoo
 
-(Licensed under the MIT license)
+
+Licensed under the MIT license
