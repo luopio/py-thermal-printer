@@ -174,19 +174,19 @@ class ThermalPrinter(object):
 	#######################################################################
 	
     def barcode_chr(self, MSG):
-        self.printer.write(chr(29)) """Leave"""
-        self.printer.write(chr(72)) """Leave"""
-        self.printer.write(msg) """ Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed """
+        self.printer.write(chr(29)) ###Leave###
+        self.printer.write(chr(72)) ###Leave###
+        self.printer.write(msg)     ###Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed###
 		
     def barcode_height(self):
-        self.printer.write(chr(29)) """Leave"""
-        self.printer.write(chr(104)) """Leave"""
-        self.printer.write(msg) """ Value 1-255 Default 50 """
+        self.printer.write(chr(29))  ###Leave###
+        self.printer.write(chr(104)) ###Leave###
+        self.printer.write(msg)      ###Value 1-255 Default 50###
 		
     def barcode_height(self):
-        self.printer.write(chr(29)) """Leave"""
-        self.printer.write(chr(119)) """Leave"""
-        self.printer.write(chr(2)) """ Value 2,3 Default 2 """
+        self.printer.write(chr(29))  ###Leave###
+        self.printer.write(chr(119)) ###Leave###
+        self.printer.write(chr(2))   ###Value 2,3 Default 2 ###
 	############################################
 	#CODE SYSTEM, NUMBER OF CHARACTERS 	   #
 	#65=UPC-A	11,12	#71=CODEBAR	>1 #
@@ -198,10 +198,10 @@ class ThermalPrinter(object):
 	############################################
 		
     def barcode(self, msg):
-        self.printer.write(chr(29)) """ LEAVE """
-        self.printer.write(chr(107)) """ LEAVE """
-        self.printer.write(chr(65)) """ USE ABOVE CHART """
-        self.printer.write(chr(12)) """ USE CHART NUMBER OF CHAR """
+        self.printer.write(chr(29))  ###LEAVE ###
+        self.printer.write(chr(107)) ### LEAVE ###
+        self.printer.write(chr(65))  ### USE ABOVE CHART ###
+        self.printer.write(chr(12))  ### USE CHART NUMBER OF CHAR ###
         self.printer.write(msg)
       	  #############
 	  #END BARCODE#
