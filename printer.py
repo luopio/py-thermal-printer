@@ -173,12 +173,12 @@ class ThermalPrinter(object):
 	#for information on how to use barcodes	 			      #
 	#######################################################################
 	
-    def barcode_chr(self, MSG):
+    def barcode_chr(self, msg):
         self.printer.write(chr(29)) ###Leave###
         self.printer.write(chr(72)) ###Leave###
         self.printer.write(msg)     ###Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed###
 		
-    def barcode_height(self):
+    def barcode_height(self, msg):
         self.printer.write(chr(29))  ###Leave###
         self.printer.write(chr(104)) ###Leave###
         self.printer.write(msg)      ###Value 1-255 Default 50###
