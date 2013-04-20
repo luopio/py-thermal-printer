@@ -167,45 +167,37 @@ class ThermalPrinter(object):
         self.printer.write(self._ESC)
         self.printer.write(chr(123))
         self.printer.write(chr(1))
-	#######################################################################
-	#				BARCODE				      #
-	#Please read http://www.adafruit.com/datasheets/A2-user%20manual.pdf  #
-	#for information on how to use barcodes	 			      #
-	#######################################################################
-	
-    def barcode_chr(self, msg):
-        self.printer.write(chr(29)) ###Leave###
-        self.printer.write(chr(72)) ###Leave###
-        self.printer.write(msg)     ###Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed###
+        
+	 def barcode_chr(self, msg):
+        self.printer.write(chr(29)) # Leave
+        self.printer.write(chr(72)) # Leave
+        self.printer.write(msg)     # Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed
 		
     def barcode_height(self, msg):
-        self.printer.write(chr(29))  ###Leave###
-        self.printer.write(chr(104)) ###Leave###
-        self.printer.write(msg)      ###Value 1-255 Default 50###
+        self.printer.write(chr(29))  # Leave
+        self.printer.write(chr(104)) # Leave
+        self.printer.write(msg)      # Value 1-255 Default 50
 		
     def barcode_height(self):
-        self.printer.write(chr(29))  ###Leave###
-        self.printer.write(chr(119)) ###Leave###
-        self.printer.write(chr(2))   ###Value 2,3 Default 2 ###
-	############################################
-	#CODE SYSTEM, NUMBER OF CHARACTERS 	   #
-	#65=UPC-A	11,12	#71=CODEBAR	>1 #
-	#66=UPC-E	11,12	#72=CODE93	>1 #
-	#67=EAN13	12,13	#73=CODE128	>1 #
-	#68=EAN8	7,8	#74=CODE11	>1 #
-	#69=CODE39	>1	#75=MSI		>1 #
-	#70=I25		>1 EVEN NUMBER		   #
-	############################################
+        self.printer.write(chr(29))  # Leave
+        self.printer.write(chr(119)) # Leave
+        self.printer.write(chr(2))   # Value 2,3 Default 2
 		
     def barcode(self, msg):
-        self.printer.write(chr(29))  ###LEAVE ###
-        self.printer.write(chr(107)) ### LEAVE ###
-        self.printer.write(chr(65))  ### USE ABOVE CHART ###
-        self.printer.write(chr(12))  ### USE CHART NUMBER OF CHAR ###
+        """ Please read http://www.adafruit.com/datasheets/A2-user%20manual.pdf
+	        for information on how to use barcodes. """
+        # CODE SYSTEM, NUMBER OF CHARACTERS 	   
+	    # 65=UPC-A	11,12	#71=CODEBAR	>1
+	    # 66=UPC-E	11,12	#72=CODE93	>1
+	    # 67=EAN13	12,13	#73=CODE128	>1
+	    # 68=EAN8	7,8	#74=CODE11	>1
+	    # 69=CODE39	>1	#75=MSI		>1
+	    # 70=I25		>1 EVEN NUMBER		   
+        self.printer.write(chr(29))  # LEAVE
+        self.printer.write(chr(107)) # LEAVE
+        self.printer.write(chr(65))  # USE ABOVE CHART
+        self.printer.write(chr(12))  # USE CHART NUMBER OF CHAR 
         self.printer.write(msg)
-      	  #############
-	  #END BARCODE#
-	  #############
         
     def print_text(self, msg, chars_per_line=None):
         """ Print some text defined by msg. If chars_per_line is defined, 
