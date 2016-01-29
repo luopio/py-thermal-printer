@@ -99,6 +99,41 @@ class ThermalPrinter(object):
         self.printer.write(chr(35))
         self.printer.write(chr((printDensity << 4) | printBreakTime))
 
+    def offline(self):
+        # Take the printer offline. Print commands sent after this will be
+        # ignored until 'online' is called.
+        self.printer.write(self._ESC)
+        self.printer.write(chr(61))
+        self.printer.write(chr(0))
+
+    def online(self):
+        # Take the printer back online. Subsequent print commands will be obeyed.
+        self.printer.write(self._ESC)
+        self.printer.write(chr(61))
+        self.printer.write(chr(1))
+
+    def sleep(self):
+        # Put the printer into a low-energy state immediately.
+        self.sleep_after(1)  # Can't be 0, that means 'don't sleep'
+
+    def sleep_after(self, seconds):
+        # Put the printer into a low-energy state after the given number
+        # of seconds.
+        if seconds:
+            self.printer.write(self._ESC)
+            self.printer.write(chr(56))
+            self.printer.write(chr(seconds))
+            self.printer.write(chr(seconds >> 8))
+
+    def wake(self):
+        # Wake the printer from a low-energy state.
+        self.printer.write(chr(255))
+        time.sleep(0.05)
+        self.printer.write(self._ESC)
+        self.printer.write(chr(56))
+        self.printer.write(chr(0))
+        self.printer.write(chr(0))
+
     def reset(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(64))
