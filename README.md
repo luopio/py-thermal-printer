@@ -29,9 +29,10 @@ Author:
 Lauri Kainulainen
 
 Contributors:
-Jonathan Harlap
-Owen Mundy
-bodiedoo
+- Jonathan Harlap
+- Owen Mundy
+- bodiedoo
+- Mickaël S. (BoboTiG)
 
 
 Licensed under the MIT license
