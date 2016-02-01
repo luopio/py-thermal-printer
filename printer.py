@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 #coding=utf-8
 
-import serial, time
+import serial, struct, time
 
 #===========================================================#
 # RASPBERRY PI (tested with Raspbian Jan 2012):
@@ -133,6 +133,19 @@ class ThermalPrinter(object):
         self.printer.write(chr(56))
         self.printer.write(chr(0))
         self.printer.write(chr(0))
+
+    def has_paper(self):
+        # Check the status of the paper using the printer's self reporting
+        # ability. SerialTX _must_ be connected!
+        self.printer.write(self._ESC)
+        self.printer.write(chr(118))
+        self.printer.write(chr(0))
+        status = -1
+        if self.printer.inWaiting() > 0:
+            ret = self.printer.read()
+            if ret:
+                status = struct.unpack('b', ret)[0]
+        return bool(status & 0b00000100)
 
     def reset(self):
         self.printer.write(self._ESC)
