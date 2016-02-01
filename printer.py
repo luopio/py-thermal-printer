@@ -120,6 +120,7 @@ class ThermalPrinter(object):
         # Put the printer into a low-energy state after the given number
         # of seconds.
         if seconds:
+            time.sleep(seconds)
             self.printer.write(self._ESC)
             self.printer.write(chr(56))
             self.printer.write(chr(seconds))
