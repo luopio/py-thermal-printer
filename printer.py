@@ -135,21 +135,18 @@ class ThermalPrinter(object):
         self.printer.write(chr(0))
         self.printer.write(chr(0))
 
-    def has_paper(self, first=True):
+    def has_paper(self):
         # Check the status of the paper using the printer's self reporting
         # ability. SerialTX _must_ be connected!
-        # For whatever reason, we need to check twice ...
         status = -1
         self.printer.write(self._ESC)
         self.printer.write(chr(118))
         self.printer.write(chr(0))
-        if self.printer.inWaiting() > 0:
-            ret = self.printer.read()
-            if ret:
-                status = struct.unpack('b', ret)[0]
-        if first:
-            time.sleep(0.1)
-            return self.has_paper(first=False)
+        for i in range(0, 9):
+            if self.printer.inWaiting():
+                status = struct.unpack('b', self.printer.read())[0]
+                break
+            time.sleep(0.01)
         return not bool(status & 0b00000100)
 
     def reset(self):
