@@ -255,13 +255,14 @@ class ThermalPrinter(object):
             empty lines. """
         if chars_per_line == None:
             self.printer.write(msg)
+            time.sleep(0.2)
         else:
             l = list(msg)
             le = len(msg)
             for i in xrange(chars_per_line + 1, le, chars_per_line + 1):
                 l.insert(i, '\n')
             self.printer.write("".join(l))
-            print "".join(l)
+            time.sleep(0.2)
 
     def print_markup(self, markup):
         """ Print text with markup for styling.
