@@ -365,7 +365,7 @@ class ThermalPrinter(object):
         """
         counter = 0
         if output_png:
-            import Image, ImageDraw
+            from PIL import Image, ImageDraw
             test_img = Image.new('RGB', (384, h))
             draw = ImageDraw.Draw(test_img)
 
@@ -450,7 +450,7 @@ il inverse left
     p.print_markup(markup)
 
     # runtime dependency on Python Imaging Library
-    import Image, ImageDraw
+    from PIL import Image
     i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
