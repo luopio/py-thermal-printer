@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 #coding=utf-8
 
-import serial, struct, time
+from serial import Serial
+from struct import unpack
+from time import sleep
 
 #===========================================================#
 # RASPBERRY PI (tested with Raspbian Jan 2012):
@@ -79,7 +81,7 @@ class ThermalPrinter(object):
     # clear, but the slower printing speed.
 
     def __init__(self, heatTime=80, heatInterval=2, heatingDots=7, serialport=SERIALPORT):
-        self.printer = serial.Serial(serialport, self.BAUDRATE, timeout=self.TIMEOUT)
+        self.printer = Serial(serialport, self.BAUDRATE, timeout=self.TIMEOUT)
         self.printer.write(self._ESC) # ESC - command
         self.printer.write(chr(64)) # @   - initialize
         self.printer.write(self._ESC) # ESC - command
@@ -120,7 +122,7 @@ class ThermalPrinter(object):
         # Put the printer into a low-energy state after the given number
         # of seconds.
         if seconds:
-            time.sleep(seconds)
+            sleep(seconds)
             self.printer.write(self._ESC)
             self.printer.write(chr(56))
             self.printer.write(chr(seconds))
@@ -129,7 +131,7 @@ class ThermalPrinter(object):
     def wake(self):
         # Wake the printer from a low-energy state.
         self.printer.write(chr(255))
-        time.sleep(0.05)
+        sleep(0.05)
         self.printer.write(self._ESC)
         self.printer.write(chr(56))
         self.printer.write(chr(0))
@@ -144,9 +146,9 @@ class ThermalPrinter(object):
         self.printer.write(chr(0))
         for i in range(0, 9):
             if self.printer.inWaiting():
-                status = struct.unpack('b', self.printer.read())[0]
+                status = unpack('b', self.printer.read())[0]
                 break
-            time.sleep(0.01)
+            sleep(0.01)
         return not bool(status & 0b00000100)
 
     def reset(self):
@@ -255,14 +257,14 @@ class ThermalPrinter(object):
             empty lines. """
         if chars_per_line == None:
             self.printer.write(msg)
-            time.sleep(0.2)
+            sleep(0.2)
         else:
             l = list(msg)
             le = len(msg)
             for i in xrange(chars_per_line + 1, le, chars_per_line + 1):
                 l.insert(i, '\n')
             self.printer.write("".join(l))
-            time.sleep(0.2)
+            sleep(0.2)
 
     def print_markup(self, markup):
         """ Print text with markup for styling.
