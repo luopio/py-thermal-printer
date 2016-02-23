@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#coding=utf-8
+# coding: utf-8
 
 from serial import Serial
 from struct import unpack
@@ -379,7 +379,7 @@ class ThermalPrinter(object):
             chunkHeight = 255 if (h - rowStart) > 255 else h - rowStart
             print_bytes += (18, 42, chunkHeight, 48)
 
-            for i in xrange(0, 48 * chunkHeight, 1):
+            for i in xrange(0, 48 * chunkHeight):
                 # read one byte in
                 byt = 0
                 for xx in xrange(8):
