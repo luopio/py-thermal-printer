@@ -171,55 +171,30 @@ class ThermalPrinter(object):
         self.printer.write(chr(97))
         self.printer.write(chr(pos))
 
-    def bold_off(self):
+    def bold(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(69))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def bold_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(69))
-        self.printer.write(chr(1))
-
-    def font_b_off(self):
+    def font_b(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(33))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def font_b_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(33))
-        self.printer.write(chr(1))
-
-    def underline_off(self):
+    def underline(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(45))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def underline_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(45))
-        self.printer.write(chr(1))
-
-    def inverse_off(self):
+    def inverse(self, on=True):
         self.printer.write(chr(29))
         self.printer.write(chr(66))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def inverse_on(self):
-        self.printer.write(chr(29))
-        self.printer.write(chr(66))
-        self.printer.write(chr(1))
-
-    def upsidedown_off(self):
+    def upsidedown(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(123))
-        self.printer.write(chr(0))
-
-    def upsidedown_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(123))
-        self.printer.write(chr(1))
+        self.printer.write(chr(on))
 
     def barcode_chr(self, msg):
         self.printer.write(chr(29)) # Leave
@@ -283,13 +258,13 @@ class ThermalPrinter(object):
             text = l[3:]
 
             if style == 'b':
-                self.bold_on()
+                self.bold()
             elif style == 'u':
-               self.underline_on()
+               self.underline()
             elif style == 'i':
-               self.inverse_on()
+               self.inverse()
             elif style == 'f':
-                self.font_b_on()
+                self.font_b()
 
             self.justify(justification)
             self.print_text(text)
@@ -297,13 +272,13 @@ class ThermalPrinter(object):
                 self.justify()
 
             if style == 'b':
-                self.bold_off()
+                self.bold(False)
             elif style == 'u':
-               self.underline_off()
+               self.underline(False)
             elif style == 'i':
-               self.inverse_off()
+               self.inverse(False)
             elif style == 'f':
-                self.font_b_off()
+                self.font_b(False)
 
     def convert_pixel_array_to_binary(self, pixels, w, h):
         """ Convert the pixel array into a black and white plain list of 1's and 0's
@@ -425,22 +400,22 @@ if __name__ == '__main__':
     p = ThermalPrinter(serialport=serialport)
     p.print_text("\nHello maailma. How's it going?\n")
     p.print_text("Part of this ")
-    p.bold_on()
+    p.bold()
     p.print_text("line is bold\n")
-    p.bold_off()
+    p.bold(False)
     p.print_text("Part of this ")
-    p.font_b_on()
+    p.font_b()
     p.print_text("line is fontB\n")
-    p.font_b_off()
+    p.font_b(False)
     p.justify("R")
     p.print_text("right justified\n")
     p.justify("C")
     p.print_text("centered\n")
     p.justify() # justify("L") works too
     p.print_text("left justified\n")
-    p.upsidedown_on()
+    p.upsidedown()
     p.print_text("upside down\n")
-    p.upsidedown_off()
+    p.upsidedown(False)
 
     markup = """bl bold left
 ur underline right
