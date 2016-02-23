@@ -155,8 +155,9 @@ class ThermalPrinter(object):
         self.printer.write(self._ESC)
         self.printer.write(chr(64))
 
-    def linefeed(self):
-        self.printer.write(chr(10))
+    def linefeed(self, number=1):
+        for _ in range(number):
+            self.printer.write(chr(10))
 
     def justify(self, align="L"):
         pos = 0
@@ -459,6 +460,4 @@ il inverse left
     p.justify("C")
     p.barcode_chr("2")
     p.barcode("014633098808")
-    p.linefeed()
-    p.linefeed()
-    p.linefeed()
+    p.linefeed(3)
