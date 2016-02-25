@@ -1,30 +1,32 @@
-#!/usr/bin/env python 
-#coding=utf-8
+#!/usr/bin/env python
+# coding: utf-8
 
-import serial, struct, time
+from serial import Serial
+from struct import unpack
+from time import sleep
 
 #===========================================================#
 # RASPBERRY PI (tested with Raspbian Jan 2012):
 # - Ensure that ttyAMA0 is not used for serial console access:
-# edit /boot/cmdline.txt (remove all name-value pairs containing 
+# edit /boot/cmdline.txt (remove all name-value pairs containing
 # ttyAMA0) and comment out last line in /etc/inittab.
 # - Fix user permissions with "sudo usermod -a -G dialout pi"
 # - Reboot
 # - Ensure that the SERIALPORT setting is correct below
 #
-# BEAGLE BONE: 
+# BEAGLE BONE:
 # Mux settings (Ängström 2012.05, also work on ubuntu 12.04):
 # echo 1 > /sys/kernel/debug/omap_mux/spi0_sclk
-# echo 1 > /sys/kernel/debug/omap_mux/spi0_d0 
+# echo 1 > /sys/kernel/debug/omap_mux/spi0_d0
 #===========================================================#
 
-    
+
 class ThermalPrinter(object):
-    """ 
-        
+    """
+
         Thermal printing library that controls the "micro panel thermal printer" sold in
-        shops like Adafruit and Sparkfun (e.g. http://www.adafruit.com/products/597). 
-        Mostly ported from Ladyada's Arduino library 
+        shops like Adafruit and Sparkfun (e.g. http://www.adafruit.com/products/597).
+        Mostly ported from Ladyada's Arduino library
         (https://github.com/adafruit/Adafruit-Thermal-Printer-Library) to run on
         BeagleBone and Raspberry Pi.
 
@@ -39,7 +41,7 @@ class ThermalPrinter(object):
         Thanks to Matt Richardson for the initial pointers on controlling the
         device via Python.
 
-        @author: Lauri Kainulainen 
+        @author: Lauri Kainulainen
 
     """
 
@@ -61,12 +63,12 @@ class ThermalPrinter(object):
 
     _ESC = chr(27)
 
-    # These values (including printDensity and printBreaktime) are taken from 
-    # lazyatom's Adafruit-Thermal-Library branch and seem to work nicely with bitmap 
-    # images. Changes here can cause symptoms like images printing out as random text. 
+    # These values (including printDensity and printBreaktime) are taken from
+    # lazyatom's Adafruit-Thermal-Library branch and seem to work nicely with bitmap
+    # images. Changes here can cause symptoms like images printing out as random text.
     # Play freely, but remember the working values.
     # https://github.com/adafruit/Adafruit-Thermal-Printer-Library/blob/0cc508a9566240e5e5bac0fa28714722875cae69/Thermal.cpp
-    
+
     # Set "max heating dots", "heating time", "heating interval"
     # n1 = 0-255 Max printing dots, Unit (8dots), Default: 7 (64 dots)
     # n2 = 3-255 Heating time, Unit (10us), Default: 80 (800us)
@@ -77,9 +79,9 @@ class ThermalPrinter(object):
     # but the slower printing speed. If heating time is too short,
     # blank page may occur. The more heating interval, the more
     # clear, but the slower printing speed.
-    
+
     def __init__(self, heatTime=80, heatInterval=2, heatingDots=7, serialport=SERIALPORT):
-        self.printer = serial.Serial(serialport, self.BAUDRATE, timeout=self.TIMEOUT)
+        self.printer = Serial(serialport, self.BAUDRATE, timeout=self.TIMEOUT)
         self.printer.write(self._ESC) # ESC - command
         self.printer.write(chr(64)) # @   - initialize
         self.printer.write(self._ESC) # ESC - command
@@ -120,7 +122,7 @@ class ThermalPrinter(object):
         # Put the printer into a low-energy state after the given number
         # of seconds.
         if seconds:
-            time.sleep(seconds)
+            sleep(seconds)
             self.printer.write(self._ESC)
             self.printer.write(chr(56))
             self.printer.write(chr(seconds))
@@ -129,7 +131,7 @@ class ThermalPrinter(object):
     def wake(self):
         # Wake the printer from a low-energy state.
         self.printer.write(chr(255))
-        time.sleep(0.05)
+        sleep(0.05)
         self.printer.write(self._ESC)
         self.printer.write(chr(56))
         self.printer.write(chr(0))
@@ -138,22 +140,24 @@ class ThermalPrinter(object):
     def has_paper(self):
         # Check the status of the paper using the printer's self reporting
         # ability. SerialTX _must_ be connected!
+        status = -1
         self.printer.write(self._ESC)
         self.printer.write(chr(118))
         self.printer.write(chr(0))
-        status = -1
-        if self.printer.inWaiting() > 0:
-            ret = self.printer.read()
-            if ret:
-                status = struct.unpack('b', ret)[0]
-        return bool(status & 0b00000100)
+        for i in range(0, 9):
+            if self.printer.inWaiting():
+                status = unpack('b', self.printer.read())[0]
+                break
+            sleep(0.01)
+        return not bool(status & 0b00000100)
 
     def reset(self):
         self.printer.write(self._ESC)
         self.printer.write(chr(64))
 
-    def linefeed(self):
-        self.printer.write(chr(10))
+    def linefeed(self, number=1):
+        for _ in range(number):
+            self.printer.write(chr(10))
 
     def justify(self, align="L"):
         pos = 0
@@ -167,100 +171,76 @@ class ThermalPrinter(object):
         self.printer.write(chr(97))
         self.printer.write(chr(pos))
 
-    def bold_off(self):
+    def bold(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(69))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def bold_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(69))
-        self.printer.write(chr(1))
-
-    def font_b_off(self):
+    def font_b(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(33))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def font_b_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(33))
-        self.printer.write(chr(1))
-
-    def underline_off(self):
+    def underline(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(45))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def underline_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(45))
-        self.printer.write(chr(1))
-
-    def inverse_off(self):
+    def inverse(self, on=True):
         self.printer.write(chr(29))
         self.printer.write(chr(66))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def inverse_on(self):
-        self.printer.write(chr(29))
-        self.printer.write(chr(66))
-        self.printer.write(chr(1))
-
-    def upsidedown_off(self):
+    def upsidedown(self, on=True):
         self.printer.write(self._ESC)
         self.printer.write(chr(123))
-        self.printer.write(chr(0))
+        self.printer.write(chr(on))
 
-    def upsidedown_on(self):
-        self.printer.write(self._ESC)
-        self.printer.write(chr(123))
-        self.printer.write(chr(1))
-        
     def barcode_chr(self, msg):
         self.printer.write(chr(29)) # Leave
         self.printer.write(chr(72)) # Leave
         self.printer.write(msg)     # Print barcode # 1:Abovebarcode 2:Below 3:Both 0:Not printed
-        
+
     def barcode_height(self, msg):
         self.printer.write(chr(29))  # Leave
         self.printer.write(chr(104)) # Leave
         self.printer.write(msg)      # Value 1-255 Default 50
-        
+
     def barcode_height(self):
         self.printer.write(chr(29))  # Leave
         self.printer.write(chr(119)) # Leave
         self.printer.write(chr(2))   # Value 2,3 Default 2
-        
+
     def barcode(self, msg):
         """ Please read http://www.adafruit.com/datasheets/A2-user%20manual.pdf
             for information on how to use barcodes. """
-        # CODE SYSTEM, NUMBER OF CHARACTERS        
+        # CODE SYSTEM, NUMBER OF CHARACTERS
         # 65=UPC-A    11,12    #71=CODEBAR    >1
         # 66=UPC-E    11,12    #72=CODE93    >1
         # 67=EAN13    12,13    #73=CODE128    >1
         # 68=EAN8    7,8    #74=CODE11    >1
         # 69=CODE39    >1    #75=MSI        >1
-        # 70=I25        >1 EVEN NUMBER           
+        # 70=I25        >1 EVEN NUMBER
         self.printer.write(chr(29))  # LEAVE
         self.printer.write(chr(107)) # LEAVE
         self.printer.write(chr(65))  # USE ABOVE CHART
-        self.printer.write(chr(12))  # USE CHART NUMBER OF CHAR 
+        self.printer.write(chr(12))  # USE CHART NUMBER OF CHAR
         self.printer.write(msg)
-        
+
     def print_text(self, msg, chars_per_line=None):
-        """ Print some text defined by msg. If chars_per_line is defined, 
-            inserts newlines after the given amount. Use normal '\n' line breaks for 
-            empty lines. """ 
-        if chars_per_line == None:
+        """ Print some text defined by msg. If chars_per_line is defined,
+            inserts newlines after the given amount. Use normal '\n' line breaks for
+            empty lines. """
+        if not chars_per_line:
             self.printer.write(msg)
+            sleep(0.2)
         else:
             l = list(msg)
             le = len(msg)
             for i in xrange(chars_per_line + 1, le, chars_per_line + 1):
                 l.insert(i, '\n')
             self.printer.write("".join(l))
-            print "".join(l)
+            sleep(0.2)
 
     def print_markup(self, markup):
         """ Print text with markup for styling.
@@ -278,13 +258,13 @@ class ThermalPrinter(object):
             text = l[3:]
 
             if style == 'b':
-                self.bold_on()
+                self.bold()
             elif style == 'u':
-               self.underline_on()
+               self.underline()
             elif style == 'i':
-               self.inverse_on()
+               self.inverse()
             elif style == 'f':
-                self.font_b_on()
+                self.font_b()
 
             self.justify(justification)
             self.print_text(text)
@@ -292,13 +272,13 @@ class ThermalPrinter(object):
                 self.justify()
 
             if style == 'b':
-                self.bold_off()
+                self.bold(False)
             elif style == 'u':
-               self.underline_off()
+               self.underline(False)
             elif style == 'i':
-               self.inverse_off()
+               self.inverse(False)
             elif style == 'f':
-                self.font_b_off()
+                self.font_b(False)
 
     def convert_pixel_array_to_binary(self, pixels, w, h):
         """ Convert the pixel array into a black and white plain list of 1's and 0's
@@ -343,13 +323,13 @@ class ThermalPrinter(object):
 
     def print_bitmap(self, pixels, w, h, output_png=False):
         """ Best to use images that have a pixel width of 384 as this corresponds
-            to the printer row width. 
-            
+            to the printer row width.
+
             pixels = a pixel array. RGBA, RGB, or one channel plain list of values (ranging from 0-255).
             w = width of image
             h = height of image
             if "output_png" is set, prints an "print_bitmap_output.png" in the same folder using the same
-            thresholds as the actual printing commands. Useful for seeing if there are problems with the 
+            thresholds as the actual printing commands. Useful for seeing if there are problems with the
             original image (this requires PIL).
 
             Example code with PIL:
@@ -361,21 +341,21 @@ class ThermalPrinter(object):
         """
         counter = 0
         if output_png:
-            import Image, ImageDraw
+            from PIL import Image, ImageDraw
             test_img = Image.new('RGB', (384, h))
             draw = ImageDraw.Draw(test_img)
 
         self.linefeed()
-        
-        black_and_white_pixels = self.convert_pixel_array_to_binary(pixels, w, h)        
+
+        black_and_white_pixels = self.convert_pixel_array_to_binary(pixels, w, h)
         print_bytes = []
 
         # read the bytes into an array
         for rowStart in xrange(0, h, 256):
             chunkHeight = 255 if (h - rowStart) > 255 else h - rowStart
             print_bytes += (18, 42, chunkHeight, 48)
-            
-            for i in xrange(0, 48 * chunkHeight, 1):
+
+            for i in xrange(0, 48 * chunkHeight):
                 # read one byte in
                 byt = 0
                 for xx in xrange(8):
@@ -388,20 +368,20 @@ class ThermalPrinter(object):
                     # it's white
                     else:
                         if output_png: draw.point((counter % 384, round(counter / 384)), fill=(255, 255, 255))
-                
+
                 print_bytes.append(byt)
-        
+
         # output the array all at once to the printer
-        # might be better to send while printing when dealing with 
+        # might be better to send while printing when dealing with
         # very large arrays...
         for b in print_bytes:
-            self.printer.write(chr(b))   
-        
+            self.printer.write(chr(b))
+
         if output_png:
             test_print = open('print-output.png', 'wb')
             test_img.save(test_print, 'PNG')
             print "output saved to %s" % test_print.name
-            test_print.close()           
+            test_print.close()
 
 
 
@@ -420,22 +400,22 @@ if __name__ == '__main__':
     p = ThermalPrinter(serialport=serialport)
     p.print_text("\nHello maailma. How's it going?\n")
     p.print_text("Part of this ")
-    p.bold_on()
+    p.bold()
     p.print_text("line is bold\n")
-    p.bold_off()
+    p.bold(False)
     p.print_text("Part of this ")
-    p.font_b_on()
+    p.font_b()
     p.print_text("line is fontB\n")
-    p.font_b_off()
+    p.font_b(False)
     p.justify("R")
     p.print_text("right justified\n")
     p.justify("C")
     p.print_text("centered\n")
     p.justify() # justify("L") works too
     p.print_text("left justified\n")
-    p.upsidedown_on()
+    p.upsidedown()
     p.print_text("upside down\n")
-    p.upsidedown_off()
+    p.upsidedown(False)
 
     markup = """bl bold left
 ur underline right
@@ -446,7 +426,7 @@ il inverse left
     p.print_markup(markup)
 
     # runtime dependency on Python Imaging Library
-    import Image, ImageDraw
+    from PIL import Image
     i = Image.open("example-lammas.png")
     data = list(i.getdata())
     w, h = i.size
@@ -455,7 +435,4 @@ il inverse left
     p.justify("C")
     p.barcode_chr("2")
     p.barcode("014633098808")
-    p.linefeed()
-    p.linefeed()
-    p.linefeed()
-    
+    p.linefeed(3)
